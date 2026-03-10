@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>M.BOOPAL — ECE Blog</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=JetBrains+Mono:wght@300;400;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #080c10;
+      --surface: #0d1117;
+      --border: #1a2332;
+      --cyan: #00e5ff;
+      --cyan-dim: #00b8d9;
+      --green: #39ff14;
+      --text: #e8edf3;
+      --muted: #6b7d8f;
+      --accent-warm: #ff6b35;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    /* Custom cursor */
+    .cursor {
+      width: 12px; height: 12px;
+      border: 2px solid var(--cyan);
+      border-radius: 50%;
+      position: fixed; pointer-events: none;
+      z-index: 9999; transition: transform 0.1s;
+      mix-blend-mode: screen;
+    }
+    .cursor-trail {
+      width: 6px; height: 6px;
+      background: var(--cyan);
+      border-radius: 50%;
+      position: fixed; pointer-events: none;
+      z-index: 9998; opacity: 0.5;
+      transition: transform 0.25s ease;
+    }
+
+    /* Grid background */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none; z-index: 0;
+    }
+
+    /* Noise overlay */
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      opacity: 0.4; pointer-events: none; z-index: 0;
+    }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.2rem 3rem;
+      background: rgba(8,12,16,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800; font-size: 1.1rem;
+      color: var(--cyan); letter-spacing: 0.2em;
+      text-decoration: none;
+    }
+    .nav-logo span { color: var(--text); }
+    .nav-links { display: flex; gap: 2rem; list-style: none; }
+    .nav-links a {
+      color: var(--muted); text-decoration: none;
+      font-size: 0.75rem; letter-spacing: 0.15em;
+      text-transform: uppercase;
+      transition: color 0.2s;
+      position: relative;
+    }
+    .nav-links a::after {
+      content: ''; position: absolute; bottom: -4px; left: 0;
+      width: 0; height: 1px; background: var(--cyan);
+      transition: width 0.3s;
+    }
+    .nav-links a:hover { color: var(--cyan); }
+    .nav-links a:hover::after { width: 100%; }
+    .nav-badge {
+      font-size: 0.65rem; color: var(--green);
+      border: 1px solid var(--green);
+      padding: 0.25rem 0.75rem; border-radius: 2px;
+      letter-spacing: 0.1em; animation: pulse-green 2s infinite;
+    }
+    @keyframes pulse-green {
+      0%,100% { opacity: 1; } 50% { opacity: 0.5; }
+    }
+
+    /* HERO */
+    .hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      justify-content: center;
+      padding: 8rem 3rem 4rem;
+      position: relative; z-index: 1;
+      max-width: 1100px; margin: 0 auto;
+    }
+    .hero-tag {
+      font-size: 0.7rem; letter-spacing: 0.3em;
+      color: var(--cyan); text-transform: uppercase;
+      margin-bottom: 1.5rem;
+      opacity: 0; animation: fadeUp 0.8s 0.2s forwards;
+    }
+    .hero-tag::before { content: '> '; color: var(--green); }
+    .hero-name {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: clamp(3.5rem, 10vw, 8rem);
+      line-height: 0.92;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      opacity: 0; animation: fadeUp 0.8s 0.4s forwards;
+    }
+    .hero-name .accent { color: var(--cyan); }
+    .hero-name .dim { color: var(--muted); font-weight: 400; }
+    .hero-sub {
+      margin-top: 2rem;
+      font-size: 0.85rem;
+      color: var(--muted);
+      max-width: 480px;
+      line-height: 1.8;
+      opacity: 0; animation: fadeUp 0.8s 0.6s forwards;
+    }
+    .hero-sub strong { color: var(--text); }
+    .hero-cta {
+      margin-top: 3rem;
+      display: flex; gap: 1rem; flex-wrap: wrap;
+      opacity: 0; animation: fadeUp 0.8s 0.8s forwards;
+    }
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: var(--cyan); color: #000;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 0.85rem 2rem; border: none;
+      cursor: none; text-decoration: none;
+      transition: transform 0.2s, box-shadow 0.2s;
+      clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(0,229,255,0.3);
+    }
+    .btn-outline {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: transparent; color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem; letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.85rem 2rem;
+      border: 1px solid var(--border);
+      cursor: none; text-decoration: none;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .btn-outline:hover { color: var(--cyan); border-color: var(--cyan); }
+
+    /* Floating circuit elements */
+    .circuit-deco {
+      position: absolute; right: 3rem; top: 50%;
+      transform: translateY(-50%);
+      opacity: 0.12; pointer-events: none;
+      animation: fadeUp 1s 1s forwards;
+    }
+    .circuit-deco svg { width: 320px; height: 320px; }
+
+    /* STATS BAR */
+    .stats-bar {
+      position: relative; z-index: 1;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      display: flex; overflow: hidden;
+    }
+    .stat-item {
+      flex: 1; padding: 1.5rem 2rem;
+      border-right: 1px solid var(--border);
+      text-align: center;
+      opacity: 0; animation: fadeUp 0.6s forwards;
+    }
+    .stat-item:nth-child(1) { animation-delay: 1s; }
+    .stat-item:nth-child(2) { animation-delay: 1.1s; }
+    .stat-item:nth-child(3) { animation-delay: 1.2s; }
+    .stat-item:nth-child(4) { animation-delay: 1.3s; border-right: none; }
+    .stat-num {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800; font-size: 1.8rem;
+      color: var(--cyan);
+    }
+    .stat-label {
+      font-size: 0.65rem; letter-spacing: 0.2em;
+      text-transform: uppercase; color: var(--muted);
+      margin-top: 0.25rem;
+    }
+
+    /* SECTION */
+    section { position: relative; z-index: 1; }
+    .section-header {
+      display: flex; align-items: baseline; gap: 1rem;
+      margin-bottom: 3rem;
+    }
+    .section-num {
+      font-size: 0.65rem; color: var(--cyan);
+      letter-spacing: 0.2em;
+    }
+    .section-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800; font-size: 2rem;
+      letter-spacing: -0.02em;
+    }
+    .section-line {
+      flex: 1; height: 1px;
+      background: linear-gradient(to right, var(--border), transparent);
+    }
+
+    /* BLOG GRID */
+    .blog-section { padding: 5rem 3rem; max-width: 1100px; margin: 0 auto; }
+    .blog-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      grid-template-rows: auto auto;
+      gap: 1.5px;
+      background: var(--border);
+    }
+    .blog-card {
+      background: var(--surface);
+      padding: 2.5rem;
+      transition: background 0.2s;
+      cursor: none;
+    }
+    .blog-card:hover { background: #111820; }
+    .blog-card.featured { grid-row: 1 / 3; border-left: 3px solid var(--cyan); }
+    .blog-tag {
+      display: inline-block;
+      font-size: 0.6rem; letter-spacing: 0.2em;
+      text-transform: uppercase; padding: 0.2rem 0.6rem;
+      border: 1px solid; margin-bottom: 1rem;
+    }
+    .tag-ece { color: var(--cyan); border-color: var(--cyan); }
+    .tag-embed { color: var(--accent-warm); border-color: var(--accent-warm); }
+    .tag-signal { color: var(--green); border-color: var(--green); }
+    .tag-vlsi { color: #b388ff; border-color: #b388ff; }
+    .blog-card-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 1rem;
+      color: var(--text);
+      transition: color 0.2s;
+    }
+    .blog-card.featured .blog-card-title { font-size: 1.8rem; }
+    .blog-card .blog-card-title { font-size: 1rem; }
+    .blog-card:hover .blog-card-title { color: var(--cyan); }
+    .blog-card-excerpt {
+      font-size: 0.78rem; color: var(--muted);
+      line-height: 1.8; margin-bottom: 1.5rem;
+    }
+    .blog-meta {
+      display: flex; align-items: center; gap: 1rem;
+      font-size: 0.65rem; color: var(--muted); letter-spacing: 0.1em;
+    }
+    .blog-meta .dot { width: 4px; height: 4px; background: var(--border); border-radius: 50%; }
+    .read-more {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      color: var(--cyan); font-size: 0.7rem;
+      letter-spacing: 0.15em; text-transform: uppercase;
+      text-decoration: none; margin-top: 1.5rem;
+      transition: gap 0.2s;
+    }
+    .read-more:hover { gap: 0.8rem; }
+
+    /* ABOUT SECTION */
+    .about-section {
+      padding: 5rem 3rem;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .about-inner {
+      max-width: 1100px; margin: 0 auto;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 4rem;
+      align-items: center;
+    }
+    .about-text p {
+      font-size: 0.82rem; color: var(--muted);
+      line-height: 2; margin-bottom: 1rem;
+    }
+    .about-text p strong { color: var(--text); }
+    .skills-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;
+    }
+    .skill-chip {
+      display: flex; align-items: center; gap: 0.6rem;
+      background: var(--bg); border: 1px solid var(--border);
+      padding: 0.6rem 1rem; font-size: 0.7rem;
+      letter-spacing: 0.08em; color: var(--muted);
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .skill-chip:hover { border-color: var(--cyan); color: var(--cyan); }
+    .skill-chip::before { content: '◆'; font-size: 0.4rem; color: var(--cyan); }
+
+    /* TOPICS SECTION */
+    .topics-section { padding: 5rem 3rem; max-width: 1100px; margin: 0 auto; }
+    .topics-list {
+      display: flex; flex-direction: column; gap: 0;
+      border: 1px solid var(--border);
+    }
+    .topic-row {
+      display: flex; align-items: center;
+      padding: 1.5rem 2rem; gap: 2rem;
+      border-bottom: 1px solid var(--border);
+      cursor: none; transition: background 0.2s;
+    }
+    .topic-row:last-child { border-bottom: none; }
+    .topic-row:hover { background: var(--surface); }
+    .topic-num { font-size: 0.65rem; color: var(--border); width: 2rem; flex-shrink: 0; }
+    .topic-row:hover .topic-num { color: var(--cyan); }
+    .topic-name {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700; font-size: 1.2rem;
+      flex: 1;
+    }
+    .topic-count {
+      font-size: 0.7rem; color: var(--muted);
+      letter-spacing: 0.1em;
+    }
+    .topic-arrow { color: var(--border); transition: color 0.2s, transform 0.2s; }
+    .topic-row:hover .topic-arrow { color: var(--cyan); transform: translateX(4px); }
+
+    /* FOOTER */
+    footer {
+      position: relative; z-index: 1;
+      padding: 3rem;
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 1rem;
+    }
+    .footer-brand {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800; color: var(--text);
+      font-size: 1rem; letter-spacing: 0.15em;
+    }
+    .footer-brand span { color: var(--cyan); }
+    .footer-links { display: flex; gap: 2rem; }
+    .footer-links a {
+      font-size: 0.7rem; color: var(--muted);
+      text-decoration: none; letter-spacing: 0.1em;
+      transition: color 0.2s;
+    }
+    .footer-links a:hover { color: var(--cyan); }
+    .footer-copy { font-size: 0.65rem; color: var(--border); letter-spacing: 0.1em; }
+
+    /* ANIMATIONS */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.7s, transform 0.7s; }
+    .reveal.visible { opacity: 1; transform: none; }
+
+    /* SCROLLBAR */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); }
+    ::-webkit-scrollbar-thumb:hover { background: var(--cyan); }
+
+    /* Mobile */
+    @media (max-width: 768px) {
+      nav { padding: 1rem 1.5rem; }
+      .nav-links { display: none; }
+      .hero { padding: 7rem 1.5rem 3rem; }
+      .circuit-deco { display: none; }
+      .blog-grid { grid-template-columns: 1fr; }
+      .blog-card.featured { grid-row: auto; }
+      .about-inner { grid-template-columns: 1fr; gap: 2rem; }
+      .blog-section, .topics-section { padding: 3rem 1.5rem; }
+      .about-section { padding: 3rem 1.5rem; }
+      .stats-bar { flex-wrap: wrap; }
+      .stat-item { flex: 50%; border-right: none; border-bottom: 1px solid var(--border); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-trail" id="cursorTrail"></div>
+
+  <!-- NAV -->
+  <nav>
+    <a class="nav-logo" href="#"><span>M.</span>BOOPAL</a>
+    <ul class="nav-links">
+      <li><a href="#blog">Blog</a></li>
+      <li><a href="#topics">Topics</a></li>
+      <li><a href="#about">About</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+    <div class="nav-badge">● ONLINE</div>
+  </nav>
+
+  <!-- HERO -->
+  <div class="hero">
+    <p class="hero-tag">ECE Student · VISTAS · Electronics &amp; Communication</p>
+    <h1 class="hero-name">
+      M.<span class="accent">BOOPAL</span><br>
+      <span class="dim">// Blog</span>
+    </h1>
+    <p class="hero-sub">
+      Documenting my journey through <strong>circuits, signals, and silicon</strong>.<br>
+      Notes on embedded systems, VLSI, communication theory, and everything in between.
+    </p>
+    <div class="hero-cta">
+      <a href="#blog" class="btn-primary">↓ Read Posts</a>
+      <a href="#about" class="btn-outline">About Me</a>
+    </div>
+
+    <!-- Circuit SVG decoration -->
+    <div class="circuit-deco">
+      <svg viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="50" y="50" width="200" height="200" rx="4" stroke="#00e5ff" stroke-width="1.5" stroke-dasharray="8 4"/>
+        <circle cx="150" cy="150" r="60" stroke="#00e5ff" stroke-width="1"/>
+        <circle cx="150" cy="150" r="8" fill="#00e5ff" opacity="0.5"/>
+        <line x1="150" y1="90" x2="150" y2="50" stroke="#00e5ff" stroke-width="1.5"/>
+        <line x1="210" y1="150" x2="250" y2="150" stroke="#00e5ff" stroke-width="1.5"/>
+        <line x1="150" y1="210" x2="150" y2="250" stroke="#00e5ff" stroke-width="1.5"/>
+        <line x1="90" y1="150" x2="50" y2="150" stroke="#00e5ff" stroke-width="1.5"/>
+        <rect x="140" y="40" width="20" height="10" rx="1" fill="#00e5ff" opacity="0.4"/>
+        <rect x="240" y="140" width="20" height="20" rx="1" fill="#00e5ff" opacity="0.4"/>
+        <rect x="140" y="250" width="20" height="10" rx="1" fill="#00e5ff" opacity="0.4"/>
+        <rect x="40" y="140" width="10" height="20" rx="1" fill="#00e5ff" opacity="0.4"/>
+        <circle cx="80" cy="80" r="5" stroke="#39ff14" stroke-width="1.5"/>
+        <circle cx="220" cy="80" r="5" stroke="#39ff14" stroke-width="1.5"/>
+        <circle cx="220" cy="220" r="5" stroke="#39ff14" stroke-width="1.5"/>
+        <circle cx="80" cy="220" r="5" stroke="#39ff14" stroke-width="1.5"/>
+        <line x1="85" y1="80" x2="215" y2="80" stroke="#1a2332" stroke-width="1"/>
+        <line x1="220" y1="85" x2="220" y2="215" stroke="#1a2332" stroke-width="1"/>
+        <line x1="85" y1="220" x2="215" y2="220" stroke="#1a2332" stroke-width="1"/>
+        <line x1="80" y1="85" x2="80" y2="215" stroke="#1a2332" stroke-width="1"/>
+        <text x="130" y="155" fill="#00e5ff" font-size="10" font-family="monospace" opacity="0.8">ECE</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- STATS BAR -->
+  <div class="stats-bar">
+    <div class="stat-item">
+      <div class="stat-num">12+</div>
+      <div class="stat-label">Blog Posts</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">3rd</div>
+      <div class="stat-label">Year ECE</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">5+</div>
+      <div class="stat-label">Projects</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">VISTAS</div>
+      <div class="stat-label">University</div>
+    </div>
+  </div>
+
+  <!-- BLOG -->
+  <section id="blog" class="blog-section">
+    <div class="section-header reveal">
+      <span class="section-num">01 //</span>
+      <h2 class="section-title">Latest Posts</h2>
+      <div class="section-line"></div>
+    </div>
+
+    <div class="blog-grid reveal">
+      <!-- Featured post -->
+      <div class="blog-card featured">
+        <span class="blog-tag tag-embed">Embedded Systems</span>
+        <h3 class="blog-card-title">Building a Smart Home Automation System with Arduino &amp; IoT Sensors</h3>
+        <p class="blog-card-excerpt">
+          A deep dive into how I designed and built a fully functional home automation system using Arduino Mega, ESP8266 WiFi modules, and various sensors including temperature, motion, and gas detection. This project bridges hardware and software — blending circuit design with real-time data communication.
+        </p>
+        <p class="blog-card-excerpt">
+          From schematic design to final deployment, I walk through every step: power supply design, PCB layout considerations, sensor interfacing, and the MQTT-based communication protocol that ties it all together.
+        </p>
+        <div class="blog-meta">
+          <span>FEB 2025</span><span class="dot"></span>
+          <span>12 min read</span><span class="dot"></span>
+          <span>M. Boopal</span>
+        </div>
+        <a href="#" class="read-more">Read Article →</a>
+      </div>
+
+      <!-- Post 2 -->
+      <div class="blog-card">
+        <span class="blog-tag tag-signal">Signal Processing</span>
+        <h3 class="blog-card-title">Understanding FFT: From Math to MATLAB Implementation</h3>
+        <p class="blog-card-excerpt">Breaking down the Fast Fourier Transform algorithm and implementing it in MATLAB for real-world signal analysis.</p>
+        <div class="blog-meta">
+          <span>JAN 2025</span><span class="dot"></span><span>8 min read</span>
+        </div>
+        <a href="#" class="read-more">Read →</a>
+      </div>
+
+      <!-- Post 3 -->
+      <div class="blog-card">
+        <span class="blog-tag tag-vlsi">VLSI Design</span>
+        <h3 class="blog-card-title">CMOS Logic Gates: From Transistors to Chips</h3>
+        <p class="blog-card-excerpt">A beginner's guide to CMOS circuit design, covering NAND, NOR, and complex logic gates at the transistor level.</p>
+        <div class="blog-meta">
+          <span>DEC 2024</span><span class="dot"></span><span>6 min read</span>
+        </div>
+        <a href="#" class="read-more">Read →</a>
+      </div>
+    </div>
+
+    <!-- More posts row -->
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:1.5px; background:var(--border); margin-top:1.5px;" class="reveal">
+      <div class="blog-card">
+        <span class="blog-tag tag-ece">Communication</span>
+        <h3 class="blog-card-title">AM vs FM: A Deep Comparison of Modulation Techniques</h3>
+        <div class="blog-meta" style="margin-top:1rem"><span>NOV 2024</span><span class="dot"></span><span>5 min</span></div>
+        <a href="#" class="read-more">Read →</a>
+      </div>
+      <div class="blog-card">
+        <span class="blog-tag tag-embed">Microcontrollers</span>
+        <h3 class="blog-card-title">STM32 vs Arduino: Which Should You Pick for Your Project?</h3>
+        <div class="blog-meta" style="margin-top:1rem"><span>OCT 2024</span><span class="dot"></span><span>7 min</span></div>
+        <a href="#" class="read-more">Read →</a>
+      </div>
+      <div class="blog-card">
+        <span class="blog-tag tag-signal">Antennas</span>
+        <h3 class="blog-card-title">Designing a Yagi Antenna for 433MHz Applications</h3>
+        <div class="blog-meta" style="margin-top:1rem"><span>SEP 2024</span><span class="dot"></span><span>9 min</span></div>
+        <a href="#" class="read-more">Read →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ABOUT -->
+  <section id="about" class="about-section">
+    <div class="about-inner">
+      <div class="about-text reveal">
+        <div class="section-header">
+          <span class="section-num">02 //</span>
+          <h2 class="section-title">About Me</h2>
+        </div>
+        <p>Hey! I'm <strong>M. Boopal</strong>, a passionate Electronics &amp; Communication Engineering student at <strong>Vels Institute of Science, Technology &amp; Advanced Studies (VISTAS)</strong>, Chennai.</p>
+        <p>I started this blog to document what I learn — because the best way to understand something is to explain it. You'll find notes on labs, project breakdowns, study resources, and my honest take on ECE concepts.</p>
+        <p>When I'm not debugging circuits, I'm probably reading about <strong>5G networks, embedded Linux, or RF design</strong>.</p>
+      </div>
+      <div class="reveal">
+        <p style="font-size:0.65rem;letter-spacing:0.2em;color:var(--cyan);text-transform:uppercase;margin-bottom:1.5rem;">// Tech Stack &amp; Interests</p>
+        <div class="skills-grid">
+          <div class="skill-chip">Arduino / ESP32</div>
+          <div class="skill-chip">MATLAB / Simulink</div>
+          <div class="skill-chip">VLSI / Cadence</div>
+          <div class="skill-chip">Signal Processing</div>
+          <div class="skill-chip">PCB Design</div>
+          <div class="skill-chip">Python / C</div>
+          <div class="skill-chip">RF &amp; Antennas</div>
+          <div class="skill-chip">IoT Protocols</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TOPICS -->
+  <section id="topics" class="topics-section">
+    <div class="section-header reveal">
+      <span class="section-num">03 //</span>
+      <h2 class="section-title">Browse Topics</h2>
+      <div class="section-line"></div>
+    </div>
+    <div class="topics-list reveal">
+      <div class="topic-row">
+        <span class="topic-num">01</span>
+        <span class="topic-name">Embedded Systems</span>
+        <span class="topic-count">4 posts</span>
+        <span class="topic-arrow">→</span>
+      </div>
+      <div class="topic-row">
+        <span class="topic-num">02</span>
+        <span class="topic-name">Signal Processing</span>
+        <span class="topic-count">3 posts</span>
+        <span class="topic-arrow">→</span>
+      </div>
+      <div class="topic-row">
+        <span class="topic-num">03</span>
+        <span class="topic-name">VLSI &amp; Digital Design</span>
+        <span class="topic-count">2 posts</span>
+        <span class="topic-arrow">→</span>
+      </div>
+      <div class="topic-row">
+        <span class="topic-num">04</span>
+        <span class="topic-name">Communication Systems</span>
+        <span class="topic-count">2 posts</span>
+        <span class="topic-arrow">→</span>
+      </div>
+      <div class="topic-row">
+        <span class="topic-num">05</span>
+        <span class="topic-name">Lab Reports &amp; Projects</span>
+        <span class="topic-count">1 post</span>
+        <span class="topic-arrow">→</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer id="contact">
+    <div class="footer-brand"><span>M.</span>BOOPAL // ECE · VISTAS</div>
+    <div class="footer-links">
+      <a href="#">GitHub</a>
+      <a href="#">LinkedIn</a>
+      <a href="#">Mail</a>
+    </div>
+    <div class="footer-copy">© 2025 · Built with curiosity</div>
+  </footer>
+
+  <script>
+    // Custom cursor
+    const cursor = document.getElementById('cursor');
+    const trail = document.getElementById('cursorTrail');
+    let mx = 0, my = 0;
+    document.addEventListener('mousemove', e => {
+      mx = e.clientX; my = e.clientY;
+      cursor.style.left = mx - 6 + 'px';
+      cursor.style.top = my - 6 + 'px';
+      setTimeout(() => {
+        trail.style.left = mx - 3 + 'px';
+        trail.style.top = my - 3 + 'px';
+      }, 80);
+    });
+
+    // Reveal on scroll
+    const reveals = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+    }, { threshold: 0.1 });
+    reveals.forEach(r => observer.observe(r));
+
+    // Smooth nav scroll
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', e => {
+        const t = document.querySelector(a.getAttribute('href'));
+        if (t) { e.preventDefault(); t.scrollIntoView({ behavior: 'smooth' }); }
+      });
+    });
+  </script>
+</body>
+</html>
